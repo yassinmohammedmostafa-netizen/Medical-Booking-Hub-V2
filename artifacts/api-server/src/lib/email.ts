@@ -160,9 +160,12 @@ export async function sendPasswordResetEmail(
     console.log("[EMAIL] PROVIDER NOT CONFIGURED: SMTP");
   }
 
-  console.error(`[EMAIL] CRITICAL: No email service configured for send to ${to}`);
-  throw new Error("No email service configured. Set up the Resend integration or SMTP environment variables.");
+  console.warn(`[EMAIL] ⚠️ No email service configured. Reset code for ${to} is: ${code}`);
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("No email service configured. Set up the Resend integration or SMTP environment variables.");
+  }
 }
+
 
 export async function sendEmailVerificationEmail(
   to: string,
@@ -224,6 +227,9 @@ export async function sendEmailVerificationEmail(
     }
   }
 
-  console.error(`[EMAIL] CRITICAL: No email service configured for send to ${to}`);
-  throw new Error("No email service configured. Set up the Resend integration or SMTP environment variables.");
+  console.warn(`[EMAIL] ⚠️ No email service configured. Verification link for ${to} is: ${verificationLink}`);
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("No email service configured. Set up the Resend integration or SMTP environment variables.");
+  }
 }
+
