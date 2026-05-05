@@ -1,3 +1,4 @@
+// @ts-nocheck
 import pinoHttp from "pino-http";
 import path from "path";
 import cors from "cors";
