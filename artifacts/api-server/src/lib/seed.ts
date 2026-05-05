@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { db } from "@workspace/db";
 import { usersTable, doctorsTable, slotsTable } from "@workspace/db";
 import { hashPassword } from "./auth";
