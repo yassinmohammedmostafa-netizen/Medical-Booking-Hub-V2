@@ -36,9 +36,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, Trash2, UserPlus, Key, CheckCircle, XCircle } from "lucide-react";
+import { Search, Trash2, UserPlus, Key, CheckCircle, XCircle, User, ShieldAlert } from "lucide-react";
 import { useT } from "@/lib/translations";
 import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function AdminUsers() {
   const { data: users, isLoading } = useGetAdminUsers();
@@ -212,7 +213,22 @@ export default function AdminUsers() {
                         #{user.id}
                       </TableCell>
                       <TableCell className="font-medium">
-                        {user.firstName} {user.lastName}
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8 border">
+                            <AvatarImage src={user.avatarUrl} alt={`${user.firstName} ${user.lastName}`} />
+                            <AvatarFallback className="bg-primary/5 text-primary text-[10px]">
+                              {user.firstName[0]}{user.lastName[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col">
+                            <span>{user.firstName} {user.lastName}</span>
+                            {user.role === "doctor" && (user.pendingBio || user.pendingPrice || user.pendingAvatarUrl) && (
+                              <Badge variant="outline" className="w-fit h-4 text-[8px] bg-amber-50 text-amber-700 border-amber-200 mt-1">
+                                <ShieldAlert className="h-2 w-2 me-1" /> {t("admin_pendingChanges") || "Pending Changes"}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
                       </TableCell>
                       <TableCell>
                         {user.email}
@@ -274,7 +290,7 @@ export default function AdminUsers() {
 
                           {/* Doctor Approval */}
                           {user.role === "doctor" && (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               {!user.doctorId ? (
                                 <Button
                                   size="sm"
@@ -299,67 +315,81 @@ export default function AdminUsers() {
                                 >
                                   {t("admin_repair") || "Repair Profile"}
                                 </Button>
-                              ) : user.isApproved ? (
-                                <>
-                                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] h-5">
-                                    <CheckCircle className="h-3 w-3 me-1" /> {t("admin_approved") || "Approved"}
-                                  </Badge>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-5 text-[9px] px-1 text-red-600 hover:bg-red-50"
-                                    onClick={async () => {
-                                      if (!user.doctorId) return;
-                                      try {
-                                        const res = await fetch(`/api/admin/doctors/${user.doctorId}/approve`, {
-                                          method: "PATCH",
-                                          headers: {
-                                            "Content-Type": "application/json",
-                                            "Authorization": `Bearer ${localStorage.getItem("esaal_token")}`
-                                          },
-                                          body: JSON.stringify({ approve: false })
-                                        });
-                                        if (!res.ok) throw new Error();
-                                        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-                                        toast({ title: "Doctor approval revoked" });
-                                      } catch {
-                                        toast({ title: "Failed to revoke approval", variant: "destructive" });
-                                      }
-                                    }}
-                                  >
-                                    {t("admin_reject") || "Reject"}
-                                  </Button>
-                                </>
                               ) : (
                                 <>
-                                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] h-5">
-                                    <XCircle className="h-3 w-3 me-1" /> {t("admin_pending") || "Pending"}
-                                  </Badge>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-5 text-[9px] px-1 text-blue-600 hover:bg-blue-50"
-                                    onClick={async () => {
-                                      if (!user.doctorId) return;
-                                      try {
-                                        const res = await fetch(`/api/admin/doctors/${user.doctorId}/approve`, {
-                                          method: "PATCH",
-                                          headers: {
-                                            "Content-Type": "application/json",
-                                            "Authorization": `Bearer ${localStorage.getItem("esaal_token")}`
-                                          },
-                                          body: JSON.stringify({ approve: true })
-                                        });
-                                        if (!res.ok) throw new Error();
-                                        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-                                        toast({ title: "Doctor account approved" });
-                                      } catch {
-                                        toast({ title: "Failed to approve doctor", variant: "destructive" });
-                                      }
-                                    }}
-                                  >
-                                    {t("admin_approve") || "Approve"}
-                                  </Button>
+                                  {/* Status Badges */}
+                                  {user.isApproved ? (
+                                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] h-5">
+                                      <CheckCircle className="h-3 w-3 me-1" /> {t("admin_approved") || "Approved"}
+                                    </Badge>
+                                  ) : user.isRejected ? (
+                                    <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[10px] h-5">
+                                      <XCircle className="h-3 w-3 me-1" /> {t("admin_rejected") || "Rejected"}
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] h-5">
+                                      <XCircle className="h-3 w-3 me-1" /> {t("admin_pending") || "Pending"}
+                                    </Badge>
+                                  )}
+
+                                  {/* Action Buttons */}
+                                  <div className="flex gap-1">
+                                    {!user.isApproved && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-6 text-[9px] px-2 text-blue-600 hover:text-blue-700 border-blue-200 hover:bg-blue-50"
+                                        onClick={async () => {
+                                          if (!user.doctorId) return;
+                                          try {
+                                            const res = await fetch(`/api/admin/doctors/${user.doctorId}/approve`, {
+                                              method: "PATCH",
+                                              headers: {
+                                                "Content-Type": "application/json",
+                                                "Authorization": `Bearer ${localStorage.getItem("esaal_token")}`
+                                              },
+                                              body: JSON.stringify({ approve: true })
+                                            });
+                                            if (!res.ok) throw new Error();
+                                            queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+                                            toast({ title: "Doctor account approved" });
+                                          } catch {
+                                            toast({ title: "Failed to approve doctor", variant: "destructive" });
+                                          }
+                                        }}
+                                      >
+                                        {t("admin_approve") || "Approve"}
+                                      </Button>
+                                    )}
+                                    {!user.isRejected && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-6 text-[9px] px-2 text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
+                                        onClick={async () => {
+                                          if (!user.doctorId) return;
+                                          const reason = window.prompt("Enter rejection reason (optional):") || "";
+                                          try {
+                                            const res = await fetch(`/api/admin/doctors/${user.doctorId}/approve`, {
+                                              method: "PATCH",
+                                              headers: {
+                                                "Content-Type": "application/json",
+                                                "Authorization": `Bearer ${localStorage.getItem("esaal_token")}`
+                                              },
+                                              body: JSON.stringify({ approve: false, reason })
+                                            });
+                                            if (!res.ok) throw new Error();
+                                            queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+                                            toast({ title: "Doctor account rejected" });
+                                          } catch {
+                                            toast({ title: "Failed to reject doctor", variant: "destructive" });
+                                          }
+                                        }}
+                                      >
+                                        {t("admin_reject") || "Reject"}
+                                      </Button>
+                                    )}
+                                  </div>
                                 </>
                               )}
                             </div>

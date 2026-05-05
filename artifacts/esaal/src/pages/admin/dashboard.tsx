@@ -3,7 +3,7 @@ import { useGetAdminStats } from "@workspace/api-client-react";
 import { Layout } from "@/components/layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, Activity, Calendar, CreditCard, DollarSign, ArrowRight, ClipboardList, Sparkles, CheckCircle } from "lucide-react";
+import { Users, Activity, Calendar, CreditCard, DollarSign, ArrowRight, ClipboardList, Sparkles, CheckCircle, ShieldAlert } from "lucide-react";
 import { useT } from "@/lib/translations";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,6 +19,7 @@ export default function AdminDashboard() {
     { labelKey: "admin_allAppts" as const, value: stats.totalAppointments, color: "bg-indigo-50", textColor: "text-indigo-700", iconBg: "bg-indigo-100", Icon: Calendar },
     { labelKey: "admin_paidAppointments" as const, value: stats.paidAppointments, color: "bg-green-50", textColor: "text-green-700", iconBg: "bg-green-100", Icon: CreditCard },
     { labelKey: "admin_pendingPayments" as const, value: stats.pendingAppointments, color: "bg-amber-50", textColor: "text-amber-700", iconBg: "bg-amber-100", Icon: CreditCard },
+    { label: "Profile Changes", value: stats.pendingProfileChanges, color: "bg-purple-50", textColor: "text-purple-700", iconBg: "bg-purple-100", Icon: ShieldAlert },
   ] : [];
 
   const quickLinks = [
@@ -50,12 +51,12 @@ export default function AdminDashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mb-12">
-            {statCards.map(({ labelKey, value, color, textColor, iconBg, Icon }) => (
-              <Card key={labelKey} className={`${color} border-none shadow-sm`}>
+            {statCards.map(({ label, labelKey, value, color, textColor, iconBg, Icon }) => (
+              <Card key={labelKey || label} className={`${color} border-none shadow-sm`}>
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start">
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-1">{t(labelKey)}</p>
+                      <p className="text-sm font-medium text-muted-foreground mb-1">{labelKey ? t(labelKey) : label}</p>
                       <h3 className={`text-3xl font-bold ${textColor}`}>{value}</h3>
                     </div>
                     <div className={`p-2 ${iconBg} rounded-lg`}>

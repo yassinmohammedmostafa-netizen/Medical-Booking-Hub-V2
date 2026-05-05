@@ -116,6 +116,8 @@ router.get("/doctor/profile", requireAuth, requireRole("doctor"), async (req: Au
         pendingGender: doctorsTable.pendingGender,
         paymentInfo: doctorsTable.paymentInfo,
         pendingPaymentInfo: doctorsTable.pendingPaymentInfo,
+        avatarUrl: doctorsTable.avatarUrl,
+        pendingAvatarUrl: doctorsTable.pendingAvatarUrl,
         isRejected: doctorsTable.isRejected,
         rejectionReason: doctorsTable.rejectionReason,
       },
@@ -160,13 +162,15 @@ router.get("/doctor/profile", requireAuth, requireRole("doctor"), async (req: Au
     pendingGender: row.doctor.pendingGender,
     paymentInfo: row.doctor.paymentInfo,
     pendingPaymentInfo: row.doctor.pendingPaymentInfo,
+    avatarUrl: row.doctor.avatarUrl,
+    pendingAvatarUrl: row.doctor.pendingAvatarUrl,
     isRejected: row.doctor.isRejected,
     rejectionReason: row.doctor.rejectionReason,
   });
 });
 
 router.patch("/doctor/profile", requireAuth, requireRole("doctor"), async (req: AuthRequest, res): Promise<void> => {
-  const { bio, isOnline, price, specialty, languages, gender, paymentInfo, sessionType, yearsExperience } = req.body ?? {};
+  const { bio, isOnline, price, specialty, languages, gender, paymentInfo, sessionType, yearsExperience, avatarUrl } = req.body ?? {};
 
   const [doctor] = await db.select().from(doctorsTable).where(eq(doctorsTable.userId, req.userId!));
   if (!doctor) {
@@ -193,6 +197,7 @@ router.patch("/doctor/profile", requireAuth, requireRole("doctor"), async (req: 
     if (Array.isArray(languages)) updates.pendingLanguages = languages;
     if (typeof gender === "string") updates.pendingGender = gender;
     if (typeof paymentInfo === "string") updates.pendingPaymentInfo = paymentInfo;
+    if (typeof avatarUrl === "string") updates.pendingAvatarUrl = avatarUrl;
   } else {
     // If not yet approved (newly registered), update directly
     if (typeof bio === "string") updates.bio = bio;
@@ -204,6 +209,7 @@ router.patch("/doctor/profile", requireAuth, requireRole("doctor"), async (req: 
     if (Array.isArray(languages)) updates.languages = languages;
     if (typeof gender === "string") updates.gender = gender;
     if (typeof paymentInfo === "string") updates.paymentInfo = paymentInfo;
+    if (typeof avatarUrl === "string") updates.avatarUrl = avatarUrl;
     
     // Also clear pending fields if any (unlikely here but good practice)
     updates.pendingBio = null;
@@ -212,6 +218,7 @@ router.patch("/doctor/profile", requireAuth, requireRole("doctor"), async (req: 
     updates.pendingLanguages = null;
     updates.pendingGender = null;
     updates.pendingPaymentInfo = null;
+    updates.pendingAvatarUrl = null;
     
     // Clear rejection status if they are resubmitting while not yet approved
     updates.isRejected = false;
@@ -234,7 +241,8 @@ router.patch("/doctor/profile", requireAuth, requireRole("doctor"), async (req: 
     success: true, 
     isOnline: updated.isOnline, 
     bio: updated.bio,
-    hasPendingChanges: !!(updated.pendingBio || updated.pendingPrice || updated.pendingSpecialty || updated.pendingLanguages || updated.pendingGender)
+    avatarUrl: updated.avatarUrl,
+    hasPendingChanges: !!(updated.pendingBio || updated.pendingPrice || updated.pendingSpecialty || updated.pendingLanguages || updated.pendingGender || updated.pendingAvatarUrl)
   });
 });
 

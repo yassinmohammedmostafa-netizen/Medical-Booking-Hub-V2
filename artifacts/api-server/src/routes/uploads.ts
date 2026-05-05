@@ -1,40 +1,25 @@
 // @ts-nocheck
 import { Router, type Request, type Response } from "express";
 import multer from "multer";
-import path from "path";
-import fs from "fs";
 import { requireAuth } from "../middlewares/requireAuth.js";
 
 const router = Router();
 
-// Configure storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = "uploads";
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir);
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
+// Use memory storage for Vercel compatibility
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 2 * 1024 * 1024, // 2MB limit for Base64 efficiency
   },
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|pdf/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const allowedTypes = /jpeg|jpg|png/;
     const mimetype = allowedTypes.test(file.mimetype);
-    if (extname && mimetype) {
+    if (mimetype) {
       return cb(null, true);
     }
-    cb(new Error("Only images (jpeg, jpg, png) and PDFs are allowed"));
+    cb(new Error("Only images (jpeg, jpg, png) are allowed for profile pictures"));
   },
 });
 
@@ -44,14 +29,19 @@ router.post("/", requireAuth, upload.single("file"), (req: Request, res: Respons
     return;
   }
 
-  // Return relative path
-  const fileUrl = `/uploads/${req.file.filename}`;
+  try {
+    // Convert buffer to Base64 Data URL
+    const base64Data = req.file.buffer.toString("base64");
+    const dataUrl = `data:${req.file.mimetype};base64,${base64Data}`;
 
-  res.status(201).json({
-    url: fileUrl,
-    filename: req.file.filename,
-    originalName: req.file.originalname,
-  });
+    res.status(201).json({
+      url: dataUrl,
+      filename: req.file.originalname,
+    });
+  } catch (err) {
+    console.error("[UPLOAD] Base64 conversion failed:", err);
+    res.status(500).json({ error: "Failed to process image" });
+  }
 });
 
 export default router;

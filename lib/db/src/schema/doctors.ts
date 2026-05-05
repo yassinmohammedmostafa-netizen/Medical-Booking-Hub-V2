@@ -30,6 +30,7 @@ export const doctorsTable = sqliteTable("doctors", {
   pendingGender: text("pending_gender"),
   paymentInfo: text("payment_info"),
   pendingPaymentInfo: text("pending_payment_info"),
+  pendingAvatarUrl: text("pending_avatar_url"),
   isRejected: integer("is_rejected", { mode: "boolean" }),
   rejectionReason: text("rejection_reason"),
   priceChangedByAdmin: integer("price_changed_by_admin", { mode: "boolean" }).default(false),

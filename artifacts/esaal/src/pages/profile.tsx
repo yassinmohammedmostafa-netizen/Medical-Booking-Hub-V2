@@ -8,7 +8,8 @@ import { Layout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import type { Lang } from "@/lib/language";
-import { User, Globe, Lock, Stethoscope, Wifi, WifiOff, Info } from "lucide-react";
+import { User, Globe, Lock, Stethoscope, Wifi, WifiOff, Info, Camera, Loader2 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,8 @@ interface DoctorProfile {
   pendingGender?: string | null;
   paymentInfo?: string | null;
   pendingPaymentInfo?: string | null;
+  avatarUrl?: string | null;
+  pendingAvatarUrl?: string | null;
   isRejected?: boolean;
   rejectionReason?: string | null;
 }
@@ -72,6 +75,8 @@ export default function ProfilePage() {
   const [sessionType, setSessionType] = useState("individual");
   const [yearsExperience, setYearsExperience] = useState<number>(0);
   const [languages, setLanguages] = useState<string[]>(["Arabic"]);
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
 
   const isDoctor = user?.role === "doctor";
@@ -105,6 +110,7 @@ export default function ProfilePage() {
       setYearsExperience(doctorProfile.yearsExperience ?? 0);
       setLanguages(doctorProfile.pendingLanguages ?? doctorProfile.languages ?? ["Arabic"]);
       setIsOnline(doctorProfile.isOnline);
+      setAvatarUrl(doctorProfile.pendingAvatarUrl ?? doctorProfile.avatarUrl ?? "");
       setHasLoadedProfile(true);
     } else if (doctorProfile) {
       // Keep isOnline in sync if it changes on the server (e.g. from another tab or mutation)
@@ -113,7 +119,7 @@ export default function ProfilePage() {
 
     // Handle Approval Notifications
     if (doctorProfile) {
-      const hasPendingChanges = !!(doctorProfile.pendingBio || doctorProfile.pendingPrice || doctorProfile.pendingSpecialty || doctorProfile.pendingLanguages || doctorProfile.pendingGender || doctorProfile.pendingPaymentInfo);
+      const hasPendingChanges = !!(doctorProfile.pendingBio || doctorProfile.pendingPrice || doctorProfile.pendingSpecialty || doctorProfile.pendingLanguages || doctorProfile.pendingGender || doctorProfile.pendingPaymentInfo || doctorProfile.pendingAvatarUrl);
       const isRejected = doctorProfile.isRejected;
       const storedPendingState = localStorage.getItem('doctor_was_pending');
       
@@ -130,6 +136,41 @@ export default function ProfilePage() {
       }
     }
   }, [doctorProfile, hasLoadedProfile]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "Image too large", description: "Max size is 2MB", variant: "destructive" });
+      return;
+    }
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/uploads", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("esaal_token")}` },
+        body: formData
+      });
+      
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      setAvatarUrl(data.url);
+      
+      // Auto-save the avatar change
+      await updateDoctorProfileMutation.mutateAsync({ data: { avatarUrl: data.url } });
+      queryClient.invalidateQueries({ queryKey: getGetDoctorProfileQueryKey() });
+      toast({ title: "Photo uploaded", description: "Waiting for admin approval" });
+    } catch (err) {
+      toast({ title: "Upload failed", description: "Please try again", variant: "destructive" });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleLangChange = async (newLang: Lang) => {
     if (newLang === lang) return;
@@ -212,6 +253,7 @@ export default function ProfilePage() {
       if (yearsExperience !== originalYearsExperience) dataToUpdate.yearsExperience = yearsExperience;
       if (!arraysEqual(languages, originalLanguages)) dataToUpdate.languages = languages;
       if (isOnline !== doctorProfile?.isOnline) dataToUpdate.isOnline = isOnline;
+      if (avatarUrl !== (doctorProfile?.pendingAvatarUrl ?? doctorProfile?.avatarUrl ?? "")) dataToUpdate.avatarUrl = avatarUrl;
 
       if (Object.keys(dataToUpdate).length === 0) {
         toast({ description: t("settings_noChanges") || "No changes to save" });
@@ -222,12 +264,12 @@ export default function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: ["/api/doctor/profile"] });
       
       if (doctorProfile?.isApproved) {
-        toast({ description: t("profile_doctorUpdatePending") });
+        toast({ description: t("profile_doctorUpdatePending") || "Profile update submitted for admin approval" });
       } else {
-        toast({ description: t("profile_doctorUpdated") });
+        toast({ description: t("profile_doctorUpdated") || "Profile updated successfully" });
       }
     } catch {
-      toast({ description: t("profile_doctorUpdateFail"), variant: "destructive" });
+      toast({ description: t("profile_doctorUpdateFail") || "Failed to update profile", variant: "destructive" });
     }
   };
 
@@ -261,6 +303,50 @@ export default function ProfilePage() {
         )}
 
         <div className="space-y-4">
+          {/* Avatar Card */}
+          {isDoctor && (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative group">
+                    <Avatar className="h-24 w-24 border-4 border-background shadow-xl">
+                      <AvatarImage src={avatarUrl} alt={user?.firstName} />
+                      <AvatarFallback className="bg-primary/5 text-primary text-xl">
+                        {user?.firstName?.[0]}{user?.lastName?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <label 
+                      htmlFor="avatar-upload" 
+                      className={`absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer ${isUploading ? "opacity-100" : ""}`}
+                    >
+                      {isUploading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Camera className="h-6 w-6" />}
+                    </label>
+                    <input 
+                      id="avatar-upload" 
+                      type="file" 
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handleAvatarUpload}
+                      disabled={isUploading}
+                    />
+                  </div>
+                  <div className="text-center">
+                    <h3 className="font-bold">{t("profile_photoTitle") || "Profile Photo"}</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {doctorProfile?.pendingAvatarUrl ? (
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[9px] animate-pulse">
+                          {t("admin_pending") || "Pending Approval"}
+                        </Badge>
+                      ) : (
+                        t("profile_photoSub") || "Visible to patients after approval"
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Doctor Online Status Card */}
           {isDoctor && (
             <Card>

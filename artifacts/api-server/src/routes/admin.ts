@@ -141,6 +141,7 @@ router.patch("/admin/doctors/:id/approve-changes", requireAuth, requireRole("adm
     if (doctor.pendingLanguages !== null) updates.languages = doctor.pendingLanguages;
     if (doctor.pendingGender !== null) updates.gender = doctor.pendingGender;
     if (doctor.pendingPaymentInfo !== null) updates.paymentInfo = doctor.pendingPaymentInfo;
+    if (doctor.pendingAvatarUrl !== null) updates.avatarUrl = doctor.pendingAvatarUrl;
 
     // Clear pending fields and rejection status
     updates.pendingBio = null;
@@ -149,6 +150,7 @@ router.patch("/admin/doctors/:id/approve-changes", requireAuth, requireRole("adm
     updates.pendingLanguages = null;
     updates.pendingGender = null;
     updates.pendingPaymentInfo = null;
+    updates.pendingAvatarUrl = null;
     updates.isRejected = false;
     updates.rejectionReason = null;
 
@@ -162,6 +164,7 @@ router.patch("/admin/doctors/:id/approve-changes", requireAuth, requireRole("adm
       pendingLanguages: null,
       pendingGender: null,
       pendingPaymentInfo: null,
+      pendingAvatarUrl: null,
       isRejected: true,
       rejectionReason: req.body?.reason || null,
     }).where(eq(doctorsTable.id, id));
@@ -430,24 +433,17 @@ router.delete("/admin/users/:id", requireAuth, requireRole("admin"), async (req:
   res.json({ success: true });
 });
 
-router.get("/admin/stats", requireAuth, requireRole("admin"), async (_req: AuthRequest, res): Promise<void> => {
-  const [patientStats] = await db.select({ totalPatients: count() }).from(usersTable).where(eq(usersTable.role, "patient"));
-  const [doctorStats] = await db.select({ totalDoctors: count() }).from(usersTable).where(eq(usersTable.role, "doctor"));
-  const [apptStats] = await db.select({ totalAppointments: count() }).from(appointmentsTable);
-  const [paidStats] = await db.select({ paidAppointments: count() }).from(appointmentsTable).where(eq(appointmentsTable.isPaid, true));
-  const [pendingStats] = await db.select({ pendingAppointments: count() }).from(appointmentsTable).where(eq(appointmentsTable.status, "pending"));
+  const [pendingProfileStats] = await db.select({ count: count() }).from(doctorsTable).where(
+    sql`${doctorsTable.pendingBio} IS NOT NULL OR 
+        ${doctorsTable.pendingPrice} IS NOT NULL OR 
+        ${doctorsTable.pendingAvatarUrl} IS NOT NULL OR 
+        ${doctorsTable.pendingSpecialty} IS NOT NULL OR 
+        ${doctorsTable.pendingLanguages} IS NOT NULL OR 
+        ${doctorsTable.pendingGender} IS NOT NULL OR 
+        ${doctorsTable.pendingPaymentInfo} IS NOT NULL`
+  );
 
-  const totalPatients = patientStats?.totalPatients ?? 0;
-  const totalDoctors = doctorStats?.totalDoctors ?? 0;
-  const totalAppointments = apptStats?.totalAppointments ?? 0;
-  const paidAppointments = paidStats?.paidAppointments ?? 0;
-  const pendingAppointments = pendingStats?.pendingAppointments ?? 0;
-
-  const paidAppts = await db.select({ price: doctorsTable.price }).from(appointmentsTable)
-    .innerJoin(doctorsTable, eq(appointmentsTable.doctorId, doctorsTable.id))
-    .where(eq(appointmentsTable.isPaid, true));
-
-  const totalRevenue = paidAppts.reduce((sum, a) => sum + a.price, 0);
+  const pendingProfileChanges = pendingProfileStats?.count ?? 0;
 
   res.json({
     totalPatients,
@@ -456,6 +452,7 @@ router.get("/admin/stats", requireAuth, requireRole("admin"), async (_req: AuthR
     paidAppointments,
     pendingAppointments,
     totalRevenue,
+    pendingProfileChanges,
   });
 });
 

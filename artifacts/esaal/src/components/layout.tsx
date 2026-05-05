@@ -11,6 +11,7 @@ import {
 import { useLogoutUser, useUpdateProfile } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Lang } from "@/lib/language";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface NavLink { label: string; href: string; icon?: React.ReactNode }
 
@@ -130,7 +131,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <LangToggle />
             {user ? (
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium truncate max-w-[140px]">{user.name}</span>
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8 border">
+                    <AvatarImage src={(user as any).avatarUrl} alt={user.name} />
+                    <AvatarFallback className="bg-primary/5 text-primary text-[10px]">
+                      {user.firstName[0]}{user.lastName[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium truncate max-w-[140px]">{user.name}</span>
+                </div>
                 <Button variant="outline" size="sm" onClick={handleLogout} data-testid="button-logout">
                   <LogOut className="h-4 w-4 me-2" />
                   {t("nav_logout")}
