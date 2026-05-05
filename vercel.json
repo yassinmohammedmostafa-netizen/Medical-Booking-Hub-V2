@@ -2,6 +2,8 @@
   "version": 2,
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.mjs" },
-    { "source": "/(.*)", "destination": "/artifacts/esaal/dist/public/$1" }
+    { "source": "/uploads/(.*)", "destination": "/artifacts/api-server/uploads/$1" },
+    { "source": "/((?!api|uploads).*\\..*)", "destination": "/artifacts/esaal/dist/public/$1" },
+    { "source": "/(.*)", "destination": "/artifacts/esaal/dist/public/index.html" }
   ]
 }
