@@ -1,11 +1,11 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import { db } from "@workspace/db";
 import { slotsTable, doctorsTable, appointmentsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth, requireRole, type AuthRequest } from "../middlewares/requireAuth.js";
 import { CreateSlotBody, DeleteSlotParams } from "@workspace/api-zod";
 
-const router: IRouter = Router();
+const router: any = Router();
 
 router.get("/doctor/slots", requireAuth, requireRole("doctor"), async (req: AuthRequest, res): Promise<void> => {
   const [doctor] = await db.select().from(doctorsTable).where(eq(doctorsTable.userId, req.userId!));

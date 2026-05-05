@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import { db } from "@workspace/db";
 import { usersTable, doctorsTable, passwordResetTokensTable } from "@workspace/db";
 import { eq, and, gt } from "drizzle-orm";
@@ -11,7 +11,7 @@ import {
 import { randomBytes } from "crypto";
 import { sendPasswordResetEmail } from "../lib/email.js";
 
-const router: IRouter = Router();
+const router: any = Router();
 
 function userResponse(user: typeof usersTable.$inferSelect, doctor?: typeof doctorsTable.$inferSelect) {
   return {

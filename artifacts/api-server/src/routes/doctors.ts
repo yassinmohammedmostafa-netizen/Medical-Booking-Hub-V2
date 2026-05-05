@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import { db } from "@workspace/db";
 import { doctorsTable, usersTable, slotsTable } from "@workspace/db";
 import { eq, and, or, like, sql } from "drizzle-orm";
@@ -6,7 +6,7 @@ import { GetDoctorsQueryParams } from "@workspace/api-zod";
 
 console.log("[DOCTORS_ROUTE] Tables check:", { doctorsTable: !!doctorsTable, usersTable: !!usersTable, slotsTable: !!slotsTable });
 
-const router: IRouter = Router();
+const router: any = Router();
 
 const SPECIALTIES = [
   // Psychologist

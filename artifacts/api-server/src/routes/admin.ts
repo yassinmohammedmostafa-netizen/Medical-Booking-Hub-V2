@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import { db } from "@workspace/db";
 import { appointmentsTable, doctorsTable, usersTable, slotsTable } from "@workspace/db";
 import { eq, count, ne, sql } from "drizzle-orm";
@@ -6,7 +6,7 @@ import { requireAuth, requireRole, type AuthRequest } from "../middlewares/requi
 import { CreateAdminUserBody } from "@workspace/api-zod";
 import { hashPassword } from "../lib/auth.js";
 
-const router: IRouter = Router();
+const router: any = Router();
 
 router.get("/admin/appointments", requireAuth, requireRole("admin"), async (req: AuthRequest, res): Promise<void> => {
   const { doctorName, patientName, date } = req.query;

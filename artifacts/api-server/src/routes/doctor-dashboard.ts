@@ -1,10 +1,10 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import { db } from "@workspace/db";
 import { appointmentsTable, doctorsTable, slotsTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAuth, requireRole, type AuthRequest } from "../middlewares/requireAuth.js";
 
-const router: IRouter = Router();
+const router: any = Router();
 
 router.get("/doctor/dashboard", requireAuth, requireRole("doctor"), async (req: AuthRequest, res): Promise<void> => {
   const [doctor] = await db

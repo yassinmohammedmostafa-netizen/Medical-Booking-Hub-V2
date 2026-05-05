@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router } from "express";
 import { db } from "@workspace/db";
 import { appointmentsTable, doctorsTable, slotsTable, usersTable, messagesTable } from "@workspace/db";
 import { eq, and, asc } from "drizzle-orm";
@@ -11,7 +11,7 @@ import {
   GetAppointmentParams,
 } from "@workspace/api-zod";
 
-const router: IRouter = Router();
+const router: any = Router();
 
 async function formatAppointment(appt: typeof appointmentsTable.$inferSelect) {
   const slot = appt.slotId
