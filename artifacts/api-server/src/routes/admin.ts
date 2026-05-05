@@ -2,9 +2,9 @@ import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { appointmentsTable, doctorsTable, usersTable, slotsTable } from "@workspace/db";
 import { eq, count, ne, sql } from "drizzle-orm";
-import { requireAuth, requireRole, type AuthRequest } from "../middlewares/requireAuth";
+import { requireAuth, requireRole, type AuthRequest } from "../middlewares/requireAuth.js";
 import { CreateAdminUserBody } from "@workspace/api-zod";
-import { hashPassword } from "../lib/auth";
+import { hashPassword } from "../lib/auth.js";
 
 const router: IRouter = Router();
 

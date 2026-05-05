@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { slotsTable, doctorsTable, appointmentsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
-import { requireAuth, requireRole, type AuthRequest } from "../middlewares/requireAuth";
+import { requireAuth, requireRole, type AuthRequest } from "../middlewares/requireAuth.js";
 import { CreateSlotBody, DeleteSlotParams } from "@workspace/api-zod";
 
 const router: IRouter = Router();

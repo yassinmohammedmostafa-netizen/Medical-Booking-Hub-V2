@@ -2,7 +2,7 @@ import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { appointmentsTable, doctorsTable, slotsTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { requireAuth, requireRole, type AuthRequest } from "../middlewares/requireAuth";
+import { requireAuth, requireRole, type AuthRequest } from "../middlewares/requireAuth.js";
 
 const router: IRouter = Router();
 

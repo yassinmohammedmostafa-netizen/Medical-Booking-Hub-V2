@@ -2,14 +2,14 @@ import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { usersTable, doctorsTable, passwordResetTokensTable } from "@workspace/db";
 import { eq, and, gt } from "drizzle-orm";
-import { hashPassword, comparePassword, signToken } from "../lib/auth";
-import { requireAuth, requireRole, type AuthRequest } from "../middlewares/requireAuth";
+import { hashPassword, comparePassword, signToken } from "../lib/auth.js";
+import { requireAuth, requireRole, type AuthRequest } from "../middlewares/requireAuth.js";
 import {
   RegisterUserBody,
   LoginUserBody,
 } from "@workspace/api-zod";
 import { randomBytes } from "crypto";
-import { sendPasswordResetEmail } from "../lib/email";
+import { sendPasswordResetEmail } from "../lib/email.js";
 
 const router: IRouter = Router();
 
@@ -59,7 +59,7 @@ router.post("/auth/register", async (req, res): Promise<void> => {
   }).returning();
 
   try {
-    const { sendEmailVerificationEmail } = await import("../lib/email");
+    const { sendEmailVerificationEmail } = await import("../lib/email.js");
     await sendEmailVerificationEmail(user.email, emailVerificationToken);
     console.log(`[AUTH] Verification email sent to ${user.email}`);
   } catch (err) {
@@ -118,7 +118,7 @@ router.post("/auth/register-doctor", async (req, res): Promise<void> => {
   });
 
   try {
-    const { sendEmailVerificationEmail } = await import("../lib/email");
+    const { sendEmailVerificationEmail } = await import("../lib/email.js");
     await sendEmailVerificationEmail(user.email, emailVerificationToken);
     console.log(`[AUTH] Verification email sent to ${user.email}`);
   } catch (err) {
