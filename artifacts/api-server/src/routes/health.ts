@@ -1,11 +1,10 @@
 import { Router } from "express";
-import { HealthCheckResponse } from "@workspace/api-zod";
+// HealthCheckResponse removed for simplicity替换为// HealthCheckResponse removed for simplicity
 
 const router: any = Router();
 
-router.get("/healthz", (_req, res) => {
-  const data = HealthCheckResponse.parse({ status: "ok" });
-  res.json(data);
+router.get("/healthz", (_req: any, res: any) => {
+  res.json({ status: "ok" });
 });
 
 export default router;
