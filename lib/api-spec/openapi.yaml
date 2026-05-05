@@ -1,0 +1,1519 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Esaal medical appointment platform API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: doctors
+    description: Doctor operations
+  - name: appointments
+    description: Appointment operations
+  - name: admin
+    description: Admin operations
+  - name: slots
+    description: Availability slot operations
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: registerUser
+      tags: [auth]
+      summary: Register a new patient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterBody"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: loginUser
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logoutUser
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/change-password:
+    post:
+      operationId: changePassword
+      tags: [auth]
+      summary: Change current user password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordBody"
+      responses:
+        "200":
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Current password is wrong or not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/profile:
+    patch:
+      operationId: updateProfile
+      tags: [auth]
+      summary: Update current user profile settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "200":
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /doctor/profile:
+    get:
+      operationId: getDoctorProfile
+      tags: [doctors]
+      summary: Get current doctor profile
+      responses:
+        "200":
+          description: Doctor profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Doctor"
+    patch:
+      operationId: updateDoctorProfile
+      tags: [doctors]
+      summary: Update current doctor profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDoctorProfileBody"
+      responses:
+        "200":
+          description: Updated doctor profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Doctor"
+
+  /auth/forgot-password:
+    post:
+      operationId: forgotPassword
+      tags: [auth]
+      summary: Request a password reset email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgotPasswordBody"
+      responses:
+        "200":
+          description: Reset email sent (or silently ignored if email not found)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/reset-password:
+    post:
+      operationId: resetPassword
+      tags: [auth]
+      summary: Reset password using a valid token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordBody"
+      responses:
+        "200":
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/verify-email:
+    get:
+      operationId: verifyEmail
+      tags: [auth]
+      summary: Verify user email using a token
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          description: Invalid or expired verification token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /doctors:
+    get:
+      operationId: getDoctors
+      tags: [doctors]
+      summary: Get list of doctors with optional filters
+      parameters:
+        - name: specialty
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [psychiatrist, psychologist]
+        - name: sessionType
+          in: query
+          schema:
+            type: string
+            enum: [individual, group]
+        - name: gender
+          in: query
+          schema:
+            type: string
+            enum: [male, female]
+        - name: immediate
+          in: query
+          schema:
+            type: string
+        - name: freeConsultation
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of doctors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Doctor"
+
+  /doctors/{id}:
+    get:
+      operationId: getDoctor
+      tags: [doctors]
+      summary: Get a doctor's profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Doctor profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Doctor"
+        "404":
+          description: Doctor not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteDoctor
+      tags: [doctors]
+      summary: Delete a doctor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Doctor deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /doctors/{id}/slots:
+    get:
+      operationId: getDoctorSlots
+      tags: [slots]
+      summary: Get available slots for a doctor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Available slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Slot"
+
+  /doctors/{id}/reviews:
+    get:
+      operationId: getDoctorReviews
+      tags: [doctors]
+      summary: Get reviews for a doctor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+
+  /appointments:
+    get:
+      operationId: getAppointments
+      tags: [appointments]
+      summary: Get appointments for the current user (patient or doctor)
+      responses:
+        "200":
+          description: List of appointments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Appointment"
+    post:
+      operationId: createAppointment
+      tags: [appointments]
+      summary: Book an appointment (patient)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAppointmentBody"
+      responses:
+        "201":
+          description: Appointment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /appointments/{id}:
+    get:
+      operationId: getAppointment
+      tags: [appointments]
+      summary: Get a single appointment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Appointment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /appointments/{id}/mark-paid:
+    patch:
+      operationId: markAppointmentPaid
+      tags: [appointments]
+      summary: Mark an appointment as paid (doctor or admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Appointment marked as paid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /appointments/{id}/mark-unpaid:
+    patch:
+      operationId: markAppointmentUnpaid
+      tags: [appointments]
+      summary: Mark an appointment as unpaid (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Appointment marked as unpaid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /appointments/{id}/status:
+    patch:
+      operationId: updateAppointmentStatus
+      tags: [appointments]
+      summary: Update appointment status (doctor or admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStatusBody"
+      responses:
+        "200":
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /appointments/{id}/rate:
+    post:
+      operationId: rateAppointment
+      tags: [appointments]
+      summary: Rate an appointment (patient)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RateAppointmentBody"
+      responses:
+        "200":
+          description: Appointment rated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /calendar:
+    get:
+      operationId: getCalendarAppointments
+      tags: [appointments]
+      summary: Get paid appointments for calendar view (doctor or admin)
+      responses:
+        "200":
+          description: List of paid appointments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Appointment"
+
+  /admin/appointments:
+    get:
+      operationId: getAdminAppointments
+      tags: [admin]
+      summary: Admin - get all appointments
+      responses:
+        "200":
+          description: All appointments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Appointment"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/doctors:
+    get:
+      operationId: getAdminDoctors
+      tags: [admin]
+      summary: Admin - get all doctors
+      responses:
+        "200":
+          description: All doctors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Doctor"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Admin - get platform stats
+      responses:
+        "200":
+          description: Platform stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/users:
+    get:
+      operationId: getAdminUsers
+      tags: [admin]
+      summary: Admin - get all users
+      responses:
+        "200":
+          description: All users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createAdminUser
+      tags: [admin]
+      summary: Admin - create a new admin account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAdminUserBody"
+      responses:
+        "201":
+          description: Admin created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already in use
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/users/{id}:
+    delete:
+      operationId: deleteUser
+      tags: [admin]
+      summary: Admin - delete a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+    patch:
+      operationId: updateUserAdmin
+      tags: [admin]
+      summary: Admin - update a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserAdminBody"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /admin/users/{id}/reset-password:
+    patch:
+      operationId: resetUserPasswordAdmin
+      tags: [admin]
+      summary: Admin - reset user password
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordAdminBody"
+      responses:
+        "200":
+          description: Password reset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /admin/doctors/{id}:
+    patch:
+      operationId: updateDoctorAdmin
+      tags: [admin]
+      summary: Admin - update a doctor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDoctorAdminBody"
+      responses:
+        "200":
+          description: Doctor updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Doctor"
+
+  /admin/doctors/{id}/approve:
+    patch:
+      operationId: approveDoctor
+      tags: [admin]
+      summary: Admin - approve or reject a doctor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApproveDoctorBody"
+      responses:
+        "200":
+          description: Doctor approval status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Doctor"
+
+  /admin/doctors/{id}/approve-changes:
+    patch:
+      operationId: approveDoctorChanges
+      tags: [admin]
+      summary: Admin - approve or reject doctor profile changes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApproveChangesBody"
+      responses:
+        "200":
+          description: Doctor profile changes approved/rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Doctor"
+
+  /doctor/dashboard:
+    get:
+      operationId: getDoctorDashboard
+      tags: [doctors]
+      summary: Doctor dashboard stats
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DoctorDashboard"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /doctor/slots:
+    get:
+      operationId: getDoctorOwnSlots
+      tags: [slots]
+      summary: Get current doctor's slots
+      responses:
+        "200":
+          description: Doctor's slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Slot"
+    post:
+      operationId: createSlot
+      tags: [slots]
+      summary: Create an availability slot (doctor)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSlotBody"
+      responses:
+        "201":
+          description: Slot created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Slot"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /doctor/slots/{id}:
+    delete:
+      operationId: deleteSlot
+      tags: [slots]
+      summary: Delete a slot (doctor)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Slot deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /specialties:
+    get:
+      operationId: getSpecialties
+      tags: [doctors]
+      summary: Get list of available specialties
+      responses:
+        "200":
+          description: List of specialties
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        phone:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [patient, doctor, admin]
+        preferredLang:
+          type: string
+          enum: [en, ar]
+        isEmailVerified:
+          type: boolean
+        createdAt:
+          type: string
+      required:
+        - id
+        - firstName
+        - lastName
+        - email
+        - role
+        - preferredLang
+        - isEmailVerified
+        - createdAt
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+      required:
+        - user
+        - token
+
+    RegisterBody:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+          minLength: 8
+        phone:
+          type: string
+      required:
+        - firstName
+        - lastName
+        - email
+        - password
+
+    LoginBody:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        preferredLang:
+          type: string
+          enum: [en, ar]
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+
+    ChangePasswordBody:
+      type: object
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 8
+      required:
+        - currentPassword
+        - newPassword
+
+    ForgotPasswordBody:
+      type: object
+      properties:
+        email:
+          type: string
+      required:
+        - email
+
+    ResetPasswordBody:
+      type: object
+      properties:
+        token:
+          type: string
+        newPassword:
+          type: string
+          minLength: 8
+      required:
+        - token
+        - newPassword
+
+    Doctor:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        specialty:
+          type: array
+          items:
+            type: string
+        subspecialty:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [psychiatrist, psychologist]
+        sessionType:
+          type: string
+          enum: [individual, group, both]
+        gender:
+          type: string
+          enum: [male, female]
+        price:
+          type: integer
+        rating:
+          type: integer
+        reviewCount:
+          type: integer
+        bio:
+          type: ["string", "null"]
+        isOnline:
+          type: boolean
+        immediateAvailable:
+          type: boolean
+        freeConsultation:
+          type: boolean
+        yearsExperience:
+          type: ["integer", "null"]
+        languages:
+          type: array
+          items:
+            type: string
+        avatarUrl:
+          type: ["string", "null"]
+        pendingBio:
+          type: ["string", "null"]
+        pendingPrice:
+          type: ["integer", "null"]
+        pendingSpecialty:
+          type: array
+          items:
+            type: string
+        pendingLanguages:
+          type: array
+          items:
+            type: string
+        pendingGender:
+          type: ["string", "null"]
+        paymentInfo:
+          type: ["string", "null"]
+        pendingPaymentInfo:
+          type: string
+          nullable: true
+        isRejected:
+          type: boolean
+        rejectionReason:
+          type: string
+          nullable: true
+        isApproved:
+          type: boolean
+      required:
+        - id
+        - userId
+        - firstName
+        - lastName
+        - email
+        - specialty
+        - type
+        - sessionType
+        - gender
+        - price
+        - rating
+        - reviewCount
+        - isOnline
+        - immediateAvailable
+        - freeConsultation
+        - languages
+        - isApproved
+
+    Slot:
+      type: object
+      properties:
+        id:
+          type: integer
+        doctorId:
+          type: integer
+        startTime:
+          type: string
+        endTime:
+          type: string
+        isBooked:
+          type: boolean
+      required:
+        - id
+        - doctorId
+        - startTime
+        - endTime
+        - isBooked
+
+    CreateSlotBody:
+      type: object
+      properties:
+        startTime:
+          type: string
+        endTime:
+          type: string
+      required:
+        - startTime
+        - endTime
+
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: integer
+        patientId:
+          type: integer
+        doctorId:
+          type: integer
+        slotId:
+          type: ["integer", "null"]
+        isInstant:
+          type: boolean
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled, completed]
+        isPaid:
+          type: boolean
+        paidAt:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        patientFirstName:
+          type: ["string", "null"]
+        patientLastName:
+          type: ["string", "null"]
+        patientEmail:
+          type: ["string", "null"]
+        patientPhone:
+          type: ["string", "null"]
+        doctorFirstName:
+          type: ["string", "null"]
+        doctorLastName:
+          type: ["string", "null"]
+        doctorSpecialty:
+          type: array
+          items:
+            type: string
+        doctorPrice:
+          type: ["integer", "null"]
+        startTime:
+          type: ["string", "null"]
+        endTime:
+          type: ["string", "null"]
+        patientRating:
+          type: ["integer", "null"]
+        patientReview:
+          type: ["string", "null"]
+        cancelledBy:
+          type: ["integer", "null"]
+        cancelledAt:
+          type: ["string", "null"]
+        doctorPaymentInfo:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - patientId
+        - doctorId
+        - status
+        - isPaid
+        - isInstant
+        - createdAt
+
+    CreateAppointmentBody:
+      type: object
+      properties:
+        slotId:
+          type: integer
+        doctorId:
+          type: integer
+        notes:
+          type: string
+      required:
+        - doctorId
+
+    CreateAdminUserBody:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+          minLength: 8
+        phone:
+          type: string
+      required:
+        - firstName
+        - lastName
+        - email
+        - password
+
+    UpdateStatusBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled, completed]
+      required:
+        - status
+
+    AdminStats:
+      type: object
+      properties:
+        totalPatients:
+          type: integer
+        totalDoctors:
+          type: integer
+        totalAppointments:
+          type: integer
+        paidAppointments:
+          type: integer
+        pendingAppointments:
+          type: integer
+        totalRevenue:
+          type: integer
+      required:
+        - totalPatients
+        - totalDoctors
+        - totalAppointments
+        - paidAppointments
+        - pendingAppointments
+        - totalRevenue
+
+    DoctorDashboard:
+      type: object
+      properties:
+        upcomingCount:
+          type: integer
+        completedCount:
+          type: integer
+        pendingPaymentCount:
+          type: integer
+        totalEarnings:
+          type: integer
+        recentAppointments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Appointment"
+      required:
+        - upcomingCount
+        - completedCount
+        - pendingPaymentCount
+        - totalEarnings
+        - recentAppointments
+
+    UpdateDoctorProfileBody:
+      type: object
+      properties:
+        bio:
+          type: string
+        isOnline:
+          type: boolean
+        price:
+          type: integer
+        specialty:
+          type: array
+          items:
+            type: string
+        paymentInfo:
+          type: string
+        gender:
+          type: string
+          enum: [male, female]
+        sessionType:
+          type: string
+          enum: [individual, group]
+        languages:
+          type: array
+          items:
+            type: string
+        yearsExperience:
+          type: integer
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        doctorId:
+          type: integer
+        patientId:
+          type: integer
+        patientFirstName:
+          type: string
+        patientLastName:
+          type: string
+        rating:
+          type: integer
+        comment:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [text, image]
+        fileUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - doctorId
+        - patientId
+        - patientFirstName
+        - patientLastName
+        - rating
+        - createdAt
+
+    RateAppointmentBody:
+      type: object
+      properties:
+        rating:
+          type: integer
+        review:
+          type: string
+      required:
+        - rating
+
+    ResetPasswordAdminBody:
+      type: object
+      properties:
+        newPassword:
+          type: string
+          minLength: 8
+      required:
+        - newPassword
+
+    UpdateUserAdminBody:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+          enum: [patient, doctor, admin]
+
+    UpdateDoctorAdminBody:
+      type: object
+      properties:
+        price:
+          type: integer
+        specialty:
+          type: array
+          items:
+            type: string
+
+    ApproveDoctorBody:
+      type: object
+      properties:
+        approve:
+          type: boolean
+        reason:
+          type: string
+      required:
+        - approve
+
+    ApproveChangesBody:
+      type: object
+      properties:
+        approve:
+          type: boolean
+        reason:
+          type: string
+      required:
+        - approve
