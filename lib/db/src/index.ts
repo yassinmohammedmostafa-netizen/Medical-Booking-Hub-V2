@@ -1,12 +1,9 @@
-// @ts-nocheck
-import { drizzle } from "drizzle-orm/libsql";
-import { createClient } from "@libsql/client";
-import * as schema from "./schema";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+import * as schema from "./schema/index.js";
 
-export const client = createClient({ 
-  url: process.env.DATABASE_URL || "file:sqlite.db",
-  authToken: process.env.DATABASE_AUTH_TOKEN
-});
+const connectionString = process.env.DATABASE_URL!;
+
+// For production, we use the postgres driver
+const client = postgres(connectionString);
 export const db = drizzle(client, { schema });
-
-export * from "./schema";
