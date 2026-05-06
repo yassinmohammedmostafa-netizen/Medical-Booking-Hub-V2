@@ -35,4 +35,12 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api", router);
 app.use("/", router);
 
+// Serve static files from the root 'public' directory
+app.use(express.static(path.resolve("public")));
+
+// Handle SPA routing: serve index.html for any unknown routes
+app.get("*", (req, res) => {
+  res.sendFile(path.resolve("public", "index.html"));
+});
+
 export default app;
