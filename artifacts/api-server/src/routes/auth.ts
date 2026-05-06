@@ -27,7 +27,7 @@ function userResponse(user: typeof usersTable.$inferSelect, doctor?: typeof doct
     isEmailVerified: user.isEmailVerified,
     isApproved: doctor ? doctor.isApproved : (user.role === "admin" ? true : (user.role === "patient" ? true : false)),
     avatarUrl: doctor ? doctor.avatarUrl : null,
-    createdAt: user.createdAt.toISOString(),
+    createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : new Date().toISOString(),
   };
 }
 

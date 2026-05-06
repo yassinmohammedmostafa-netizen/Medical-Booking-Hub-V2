@@ -361,7 +361,7 @@ export default function AdminUsers() {
                                         {t("admin_approve") || "Approve"}
                                       </Button>
                                     )}
-                                    {!user.isRejected && (
+                                    {!user.isApproved && !user.isRejected && (
                                       <Button
                                         size="sm"
                                         variant="outline"

@@ -40,7 +40,10 @@ router.post("/", requireAuth, upload.single("file"), (req: Request, res: Respons
     });
   } catch (err) {
     console.error("[UPLOAD] Base64 conversion failed:", err);
-    res.status(500).json({ error: "Failed to process image" });
+    res.status(500).json({ 
+      error: "Failed to process image", 
+      details: err instanceof Error ? err.message : String(err) 
+    });
   }
 });
 
