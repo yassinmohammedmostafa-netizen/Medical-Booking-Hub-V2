@@ -27,20 +27,15 @@ app.use(
     },
   }),
 );
-app.use(cors());
+app.use(cors({
+  origin: true, // Reflect the request origin, or use a specific list of domains
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static("uploads"));
 
 app.use("/api", router);
 app.use("/", router);
-
-// Serve static files from the root 'public' directory
-app.use(express.static(path.resolve("public")));
-
-// Handle SPA routing: serve index.html for any unknown routes
-app.get("*", (req, res) => {
-  res.sendFile(path.resolve("public", "index.html"));
-});
 
 export default app;
