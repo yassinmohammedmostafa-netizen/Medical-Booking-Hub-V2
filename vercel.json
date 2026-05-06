@@ -1,13 +1,10 @@
 {
   "version": 2,
-  "cleanUrls": true,
-  "trailingSlash": false,
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index.mjs" },
+    { "source": "/api/(.*)", "destination": "/api/index.js" },
     { "source": "/uploads/(.*)", "destination": "/artifacts/api-server/uploads/$1" },
     { "source": "/assets/(.*)", "destination": "/artifacts/esaal/dist/public/assets/$1" },
     { "source": "/favicon.svg", "destination": "/artifacts/esaal/dist/public/favicon.svg" },
-    { "source": "/opengraph.jpg", "destination": "/artifacts/esaal/dist/public/opengraph.jpg" },
     { "source": "/(.*)", "destination": "/artifacts/esaal/dist/public/index.html" }
   ]
 }
