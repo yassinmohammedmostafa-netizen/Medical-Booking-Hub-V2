@@ -433,6 +433,25 @@ router.delete("/admin/users/:id", requireAuth, requireRole("admin"), async (req:
   res.json({ success: true });
 });
 
+router.get("/admin/stats", requireAuth, requireRole("admin"), async (_req: AuthRequest, res): Promise<void> => {
+  const [patientStats] = await db.select({ totalPatients: count() }).from(usersTable).where(eq(usersTable.role, "patient"));
+  const [doctorStats] = await db.select({ totalDoctors: count() }).from(usersTable).where(eq(usersTable.role, "doctor"));
+  const [apptStats] = await db.select({ totalAppointments: count() }).from(appointmentsTable);
+  const [paidStats] = await db.select({ paidAppointments: count() }).from(appointmentsTable).where(eq(appointmentsTable.isPaid, true));
+  const [pendingStats] = await db.select({ pendingAppointments: count() }).from(appointmentsTable).where(eq(appointmentsTable.status, "pending"));
+
+  const totalPatients = patientStats?.totalPatients ?? 0;
+  const totalDoctors = doctorStats?.totalDoctors ?? 0;
+  const totalAppointments = apptStats?.totalAppointments ?? 0;
+  const paidAppointments = paidStats?.paidAppointments ?? 0;
+  const pendingAppointments = pendingStats?.pendingAppointments ?? 0;
+
+  const paidAppts = await db.select({ price: doctorsTable.price }).from(appointmentsTable)
+    .innerJoin(doctorsTable, eq(appointmentsTable.doctorId, doctorsTable.id))
+    .where(eq(appointmentsTable.isPaid, true));
+
+  const totalRevenue = paidAppts.reduce((sum, a) => sum + a.price, 0);
+
   const [pendingProfileStats] = await db.select({ count: count() }).from(doctorsTable).where(
     sql`${doctorsTable.pendingBio} IS NOT NULL OR 
         ${doctorsTable.pendingPrice} IS NOT NULL OR 
