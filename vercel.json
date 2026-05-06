@@ -3,8 +3,6 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/[...slug].js" },
     { "source": "/uploads/(.*)", "destination": "/artifacts/api-server/uploads/$1" },
-    { "source": "/assets/(.*)", "destination": "/artifacts/esaal/dist/public/assets/$1" },
-    { "source": "/favicon.svg", "destination": "/artifacts/esaal/dist/public/favicon.svg" },
-    { "source": "/(.*)", "destination": "/artifacts/esaal/dist/public/index.html" }
+    { "source": "/(.*)", "destination": "/public/index.html" }
   ]
 }
